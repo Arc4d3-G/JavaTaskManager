@@ -18,23 +18,28 @@ public class JavaTaskManager {
      */
     public static void main(String[] args) {
         TaskManager taskManager = new TaskManager();
-
+        TaskDAO taskDao = new TaskDAO();
         // Adding some tasks
-        taskManager.addTask(new Task<>(1, "Complete project report", "Finish the final report for the project", false, "Work"));
-        taskManager.addTask(new Task<>(2, "Buy groceries", "Buy milk, eggs, and bread", false, "Personal"));
-        taskManager.addTask(new Task<>(3, "Workout", "Go to the gym for an hour", true, "Health"));
-
-        TaskCategorizer taskCategorizer = new TaskCategorizer();
-        Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(taskManager.getTasks());
+        taskManager.addTask(new Task<>(null, "Complete project report", "Finish the final report for the project", false, "Work"));
+        taskManager.addTask(new Task<>(null, "Buy groceries", "Buy milk, eggs, and bread", false, "Personal"));
+        taskManager.addTask(new Task<>(null, "Workout", "Go to the gym for an hour", true, "Health"));
         
-        List<Task<Integer>> incompleteTasks = taskManager.filterTasks(task -> !task.isComplete());
-        incompleteTasks.forEach(System.out::println);
+//        taskDao.getAllTasks().forEach(( Task<Integer> task) -> {
+//            taskDao.deleteTask(task.getId());
+//        });
 
-        // Printing categorized tasks
-        categorizedTasks.forEach((category, tasks) -> {
-            System.out.println("Category: " + category);
-//            tasks.forEach(System.out::println);
-        });
+//        TaskCategorizer taskCategorizer = new TaskCategorizer();
+//        Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(taskManager.getTasks());
+//
+//        List<Task<Integer>> incompleteTasks = taskManager.filterTasks(task -> !task.isComplete());
+//        incompleteTasks.forEach(System.out::println);
+//
+//        // Printing categorized tasks
+//        categorizedTasks.forEach((category, tasks) -> {
+//            System.out.println("Category: " + category);
+////            tasks.forEach(System.out::println);
+//        });
+    
 
     }
 

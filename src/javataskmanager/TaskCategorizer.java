@@ -3,15 +3,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package javataskmanager;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 /**
  *
  * @author brdde
  */
 public class TaskCategorizer {
+
     public Map<String, List<Task<Integer>>> categorizeTasks(List<Task<Integer>> tasks) {
         Map<String, List<Task<Integer>>> categorizedTasks = new HashMap<>();
         for (Task<Integer> task : tasks) {

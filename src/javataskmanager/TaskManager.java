@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class TaskManager {
+
     private List<Task<Integer>> tasks = new ArrayList<>();
 
     public void addTask(Task<Integer> task) {
@@ -28,4 +29,3 @@ public class TaskManager {
         return tasks;
     }
 }
-
