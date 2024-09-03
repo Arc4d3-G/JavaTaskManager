@@ -16,6 +16,123 @@ public class TaskManagerFrame extends javax.swing.JFrame {
     TaskDAO taskDao;
     TaskCategorizer taskCategorizer;
     DefaultTableModel tableModel;
+    HandleGUI gui;
+
+    class HandleGUI {
+
+        void populateTaskDetails() {
+            int idCol = 0;
+            int nameCol = 1;
+            int descCol = 2;
+            int completionCol = 3;
+            int categoryCol = 4;
+
+            int row = TaskTable.getSelectedRow();
+            String id = TaskTable.getModel().getValueAt(row, idCol).toString();
+            String name = TaskTable.getModel().getValueAt(row, nameCol).toString();
+            String description = TaskTable.getModel().getValueAt(row, descCol).toString();
+            boolean completionStatus = (boolean) TaskTable.getModel().getValueAt(row, completionCol);
+            String category = TaskTable.getModel().getValueAt(row, categoryCol).toString();
+
+            IDField.setText(id);
+            NameField.setText(name);
+            CategoryField.setText(category);
+            CompletedCheck.setSelected(completionStatus);
+            DescriptionTextArea.setText(description);
+        }
+
+        void handleTaskEdit() {
+
+            if (EditButton.getText() == "Edit") {
+
+                NameField.setEnabled(true);
+                NameField.setEditable(true);
+                CategoryField.setEnabled(true);
+                CategoryField.setEditable(true);
+                CompletedCheck.setEnabled(true);
+                DescriptionTextArea.setEnabled(true);
+                DescriptionTextArea.setEditable(true);
+
+                EditButton.setText("Save");
+            } else {
+
+                int id = Integer.parseInt(IDField.getText());
+                String name = NameField.getText();
+                String description = DescriptionTextArea.getText();
+                boolean completionStatus = CompletedCheck.isSelected();
+                String category = CategoryField.getText();
+                Task<Integer> newTask = new Task<>(id, name, description, completionStatus, category);
+                String response = taskDao.updateTask(newTask);
+
+                if (response == "Success") {
+
+                    taskManager.updateTask(newTask);
+
+                    NameField.setEnabled(false);
+                    NameField.setEditable(false);
+                    CategoryField.setEnabled(false);
+                    CategoryField.setEditable(false);
+                    CompletedCheck.setEnabled(false);
+                    DescriptionTextArea.setEnabled(false);
+                    DescriptionTextArea.setEditable(false);
+                    EditButton.setText("Edit");
+
+                    refreshTaskTable();
+                } else {
+                    System.out.println(response);
+                }
+            }
+        }
+
+        void handleTaskDelete() {
+            int id = Integer.parseInt(IDField.getText());
+            String response = taskDao.deleteTask(id);
+
+            if (response == "Success") {
+                taskManager.removeTask(id);
+                refreshTaskTable();
+            }
+        }
+        
+        void handleTaskCreate(){
+            String name = NewTaskNameField.getText();
+            String category = NewTaskCategoryField.getText();
+            String description = NewTaskDescriptionTextArea.getText();
+            
+            Task<Integer> newTask = new Task<>(null, name, description, false, category);
+            String response = taskDao.createTask(newTask);
+            
+            if(response.contains("Success")){
+                System.out.println(response);
+                int newId = Integer.parseInt(response.split(" \\| ")[1]);
+                newTask.setId(newId);
+                taskManager.addTask(newTask);
+                NewTaskDialog.dispose();
+                refreshTaskTable();
+            } else {
+                System.out.println(response);
+            }
+        }
+
+        void refreshTaskTable() {
+            tableModel.setRowCount(0);
+
+            taskManager.getTasks().forEach(task -> {
+                int id = task.getId();
+                String name = task.getName();
+                String desc = task.getDescription();
+                boolean completeStatus = task.isComplete();
+                String category = task.getCategory();
+
+                tableModel.addRow(new Object[]{id,
+                    name,
+                    desc,
+                    completeStatus,
+                    category});
+            });
+
+        }
+    }
 
     /**
      * Creates new form TaskManagerFrame
@@ -28,11 +145,12 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         this.taskManager = taskManager;
         this.taskDao = taskDao;
         this.taskCategorizer = taskCategorizer;
+        this.gui = new HandleGUI();
 
         this.tableModel = (DefaultTableModel) new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; 
+                return false;
             }
         };
         tableModel.addColumn("ID");
@@ -41,19 +159,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         tableModel.addColumn("is_completed");
         tableModel.addColumn("Category");
 
-        taskManager.getTasks().forEach(task -> {
-            int id = task.getId();
-            String name = task.getName();
-            String desc = task.getDescription();
-            boolean completeStatus = task.isComplete();
-            String category = task.getCategory();
-
-            tableModel.addRow(new Object[]{id,
-                name,
-                desc,
-                completeStatus,
-                category});
-        });
+        gui.refreshTaskTable();
         initComponents();
     }
 
@@ -70,11 +176,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jPanel9 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jTextField3 = new javax.swing.JTextField();
+        NewTaskCategoryField = new javax.swing.JTextField();
         jLabel11 = new javax.swing.JLabel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTextArea2 = new javax.swing.JTextArea();
-        jTextField4 = new javax.swing.JTextField();
+        NewTaskDescriptionTextArea = new javax.swing.JTextArea();
+        NewTaskNameField = new javax.swing.JTextField();
         jPanel10 = new javax.swing.JPanel();
         CreateButton = new javax.swing.JButton();
         CancelButton = new javax.swing.JButton();
@@ -91,6 +197,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         DescriptionTextArea = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
         CategoryField = new javax.swing.JTextField();
+        CompletedCheck = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         AddButton = new javax.swing.JButton();
@@ -110,7 +217,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jMenu1 = new javax.swing.JMenu();
         jMenu2 = new javax.swing.JMenu();
 
-        NewTaskDialog.setMinimumSize(new java.awt.Dimension(320, 350));
+        NewTaskDialog.setMinimumSize(new java.awt.Dimension(350, 350));
         NewTaskDialog.setPreferredSize(new java.awt.Dimension(320, 350));
 
         jPanel9.setBorder(javax.swing.BorderFactory.createTitledBorder("New Task Details"));
@@ -119,15 +226,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
 
         jLabel9.setText("Category");
 
-        jTextField3.setText("jTextField3");
-
         jLabel11.setText("Description");
 
-        jTextArea2.setColumns(20);
-        jTextArea2.setRows(5);
-        jScrollPane4.setViewportView(jTextArea2);
-
-        jTextField4.setText("jTextField4");
+        NewTaskDescriptionTextArea.setColumns(20);
+        NewTaskDescriptionTextArea.setRows(5);
+        jScrollPane4.setViewportView(NewTaskDescriptionTextArea);
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -136,14 +239,14 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField3)
+                    .addComponent(NewTaskCategoryField)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel8)
                             .addComponent(jLabel9)
                             .addComponent(jLabel11))
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jTextField4)
+                    .addComponent(NewTaskNameField)
                     .addComponent(jScrollPane4))
                 .addContainerGap())
         );
@@ -153,11 +256,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel8)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(NewTaskNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(NewTaskCategoryField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel11)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -168,6 +271,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jPanel10.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 50, 5));
 
         CreateButton.setText("Create");
+        CreateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CreateButtonActionPerformed(evt);
+            }
+        });
         jPanel10.add(CreateButton);
 
         CancelButton.setText("Cancel");
@@ -185,7 +293,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             .addGroup(NewTaskDialogLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(NewTaskDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE)
+                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -193,7 +301,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             NewTaskDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(NewTaskDialogLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -207,9 +315,19 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jPanel7.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 20, 20));
 
         EditButton.setText("Edit");
+        EditButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                EditButtonActionPerformed(evt);
+            }
+        });
         jPanel7.add(EditButton);
 
         DeleteButton.setText("Delete");
+        DeleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DeleteButtonActionPerformed(evt);
+            }
+        });
         jPanel7.add(DeleteButton);
 
         jLabel4.setText("ID");
@@ -230,6 +348,9 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jLabel7.setText("Description");
 
         CategoryField.setEditable(false);
+
+        CompletedCheck.setText("Completed");
+        CompletedCheck.setEnabled(false);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -253,7 +374,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                         .addGap(18, 18, 18)))
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2)
-                    .addComponent(jLabel7)))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(CompletedCheck)
+                        .addGap(102, 102, 102))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -261,7 +386,8 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
-                    .addComponent(jLabel4))
+                    .addComponent(jLabel4)
+                    .addComponent(CompletedCheck))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -302,6 +428,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         TaskTable.setModel(this.tableModel);
         TaskTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         TaskTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        TaskTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                TaskTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(TaskTable);
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
@@ -350,7 +481,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                 .addGap(1, 1, 1)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 226, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -399,6 +530,26 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         NewTaskDialog.dispose();
     }//GEN-LAST:event_CancelButtonActionPerformed
 
+    private void TaskTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TaskTableMouseClicked
+        // TODO add your handling code here:
+        gui.populateTaskDetails();
+    }//GEN-LAST:event_TaskTableMouseClicked
+
+    private void EditButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EditButtonActionPerformed
+        // TODO add your handling code here:
+        gui.handleTaskEdit();
+    }//GEN-LAST:event_EditButtonActionPerformed
+
+    private void DeleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteButtonActionPerformed
+        // TODO add your handling code here:
+        gui.handleTaskDelete();
+    }//GEN-LAST:event_DeleteButtonActionPerformed
+
+    private void CreateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateButtonActionPerformed
+        // TODO add your handling code here:
+        gui.handleTaskCreate();
+    }//GEN-LAST:event_CreateButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -426,12 +577,6 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         }
         //</editor-fold>
 
-        /* Create and display the form */
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//            public void run() {
-//                new TaskManagerFrame().setVisible(true);
-//            }
-//        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -439,13 +584,17 @@ public class TaskManagerFrame extends javax.swing.JFrame {
     private javax.swing.JButton CancelButton;
     private javax.swing.JComboBox<String> CategoryCombo;
     private javax.swing.JTextField CategoryField;
+    private javax.swing.JCheckBox CompletedCheck;
     private javax.swing.JButton CreateButton;
     private javax.swing.JButton DeleteButton;
     private javax.swing.JTextArea DescriptionTextArea;
     private javax.swing.JButton EditButton;
     private javax.swing.JTextField IDField;
     private javax.swing.JTextField NameField;
+    private javax.swing.JTextField NewTaskCategoryField;
+    private javax.swing.JTextArea NewTaskDescriptionTextArea;
     private javax.swing.JDialog NewTaskDialog;
+    private javax.swing.JTextField NewTaskNameField;
     private javax.swing.JButton SearchButton;
     private javax.swing.JComboBox<String> SearchCombo;
     private javax.swing.JTextField SearchField;
@@ -475,9 +624,6 @@ public class TaskManagerFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTextArea jTextArea2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
     // End of variables declaration//GEN-END:variables
 
 }

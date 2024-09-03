@@ -28,4 +28,20 @@ public class TaskManager {
     public List<Task<Integer>> getTasks() {
         return tasks;
     }
+
+    public void updateTask(Task<Integer> updatedTask) {
+        for (int i = 0; i < tasks.size(); i++) {
+            Task<Integer> task = tasks.get(i);
+            if (task.getId().equals(updatedTask.getId())) {
+                tasks.set(i, updatedTask);
+                return;
+            }
+        }
+    }
+
+    // Remove a task by ID
+    public void removeTask(Integer taskId) {
+        tasks.removeIf(task -> task.getId().equals(taskId));
+    }
+
 }

@@ -13,18 +13,21 @@ public class TaskDAO {
     private String url = "jdbc:sqlite:task_manager_db.db";
 
     // Create a new task
-    public void createTask(Task<Integer> task) {
+    public String createTask(Task<Integer> task) {
         String sql = "INSERT INTO tasks(name, description, completion_status, category) VALUES(?, ?, ?, ?)";
-
+        int id = 0;
         try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, task.getName());
             pstmt.setString(2, task.getDescription());
             pstmt.setInt(3, task.isComplete() ? 1 : 0);
             pstmt.setString(4, task.getCategory());
             pstmt.executeUpdate();
+            id = pstmt.getGeneratedKeys().getInt(1);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            return "Error: " + e.getMessage();
         }
+
+        return ("Success | " + id);
     }
 
     // Read all tasks
@@ -51,7 +54,7 @@ public class TaskDAO {
     }
 
     // Update a task
-    public void updateTask(Task<Integer> task) {
+    public String updateTask(Task<Integer> task) {
         String sql = "UPDATE tasks SET name = ?, description = ?, completion_status = ?, category = ? WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -62,19 +65,23 @@ public class TaskDAO {
             pstmt.setInt(5, task.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            return "Error: " + e.getMessage();
         }
+
+        return "Success";
     }
 
     // Delete a task
-    public void deleteTask(int id) {
+    public String deleteTask(int id) {
         String sql = "DELETE FROM tasks WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            return "Error: " + e.getMessage();
         }
+
+        return "Success";
     }
 }
