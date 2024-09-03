@@ -19,16 +19,24 @@ public class JavaTaskManager {
     public static void main(String[] args) {
         TaskManager taskManager = new TaskManager();
         TaskDAO taskDao = new TaskDAO();
-        // Adding some tasks
-        taskManager.addTask(new Task<>(null, "Complete project report", "Finish the final report for the project", false, "Work"));
-        taskManager.addTask(new Task<>(null, "Buy groceries", "Buy milk, eggs, and bread", false, "Personal"));
-        taskManager.addTask(new Task<>(null, "Workout", "Go to the gym for an hour", true, "Health"));
+        TaskCategorizer taskCategorizer = new TaskCategorizer();
         
+        // Get all tasks from db and add to taskManager instance
+        taskDao.getAllTasks().forEach((task) -> {
+            taskManager.addTask(task);
+        });
+
+        TaskManagerFrame tmf = new TaskManagerFrame(taskManager, taskDao, taskCategorizer);
+        tmf.setVisible(true);
+        // Adding some tasks
+//        taskManager.addTask(new Task<>(null, "Complete project report", "Finish the final report for the project", false, "Work"));
+//        taskManager.addTask(new Task<>(null, "Buy groceries", "Buy milk, eggs, and bread", false, "Personal"));
+//        taskManager.addTask(new Task<>(null, "Workout", "Go to the gym for an hour", true, "Health"));
+
 //        taskDao.getAllTasks().forEach(( Task<Integer> task) -> {
 //            taskDao.deleteTask(task.getId());
 //        });
-
-//        TaskCategorizer taskCategorizer = new TaskCategorizer();
+//        
 //        Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(taskManager.getTasks());
 //
 //        List<Task<Integer>> incompleteTasks = taskManager.filterTasks(task -> !task.isComplete());
@@ -39,8 +47,6 @@ public class JavaTaskManager {
 //            System.out.println("Category: " + category);
 ////            tasks.forEach(System.out::println);
 //        });
-    
-
     }
 
 }
