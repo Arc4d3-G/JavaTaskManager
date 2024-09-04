@@ -19,14 +19,14 @@ public class JavaTaskManager {
     public static void main(String[] args) {
         TaskManager taskManager = new TaskManager();
         TaskDAO taskDao = new TaskDAO();
-        TaskCategorizer taskCategorizer = new TaskCategorizer();
+//        TaskCategorizer taskCategorizer = new TaskCategorizer();
         
         // Get all tasks from db and add to taskManager instance
         taskDao.getAllTasks().forEach((task) -> {
             taskManager.addTask(task);
         });
 
-        TaskManagerFrame tmf = new TaskManagerFrame(taskManager, taskDao, taskCategorizer);
+        TaskManagerFrame tmf = new TaskManagerFrame(taskManager, taskDao);
         tmf.setVisible(true);
         // Adding some tasks
 //        taskManager.addTask(new Task<>(null, "Complete project report", "Finish the final report for the project", false, "Work"));
