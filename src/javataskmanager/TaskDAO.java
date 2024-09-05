@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package javataskmanager;
 
 import java.sql.*;
@@ -13,16 +9,17 @@ import java.util.List;
  */
 public class TaskDAO {
 
-    private String url = "jdbc:sqlite:task_manager_db.db";
+    private final String url = "jdbc:sqlite:task_manager_db.db";
 
     /**
      * Creates a new task in the database.
      *
      * @param task the task to be created
+     * @return String indicating success and the inserted row ID, or returns the error.
      */
     public String createTask(Task<Integer> task) {
         String sql = "INSERT INTO tasks(name, description, completion_status, category) VALUES(?, ?, ?, ?)";
-        int id = 0;
+        int id;
         try (Connection conn = DriverManager.getConnection(url); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, task.getName());
             pstmt.setString(2, task.getDescription());
