@@ -23,18 +23,25 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages a list of tasks, providing methods to add, update, remove, filter, and export
+ * tasks.
+ */
 public class TaskManager {
 
     private List<Task<Integer>> tasks = new ArrayList<>();
 
+    // Add a task
     public void addTask(Task<Integer> task) {
         tasks.add(task);
     }
 
+    // Get all tasks
     public List<Task<Integer>> getTasks() {
         return tasks;
     }
 
+    // Update a task by ID
     public void updateTask(Task<Integer> updatedTask) {
         for (int i = 0; i < tasks.size(); i++) {
             Task<Integer> task = tasks.get(i);
@@ -50,19 +57,25 @@ public class TaskManager {
         tasks.removeIf(task -> task.getId().equals(taskId));
     }
 
-    // Save tasks to a text file
+    /**
+     * Saves tasks to a text file and returns file properties.
+     *
+     * @param fileName the name of the file to save tasks to
+     * @return String containing file properties if file creation was successful, or the
+     * error message if not.
+     */
     public String saveTasksToFile(String fileName) {
         try (OutputStream os = new FileOutputStream(fileName)) {
             for (Task<Integer> task : tasks) {
-                String taskString = task.getId() + ","
-                        + task.getName() + ","
-                        + task.getDescription() + ","
-                        + String.valueOf(task.isComplete()) + ","
+                String taskString = task.getId() + "|"
+                        + task.getName() + "|"
+                        + task.getDescription() + "|"
+                        + String.valueOf(task.isComplete()) + "|"
                         + task.getCategory() + System.lineSeparator();
                 os.write(taskString.getBytes());
             }
 
-            // Display file properties
+            // Get file properties
             Path filePath = Paths.get(fileName);
             BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
 
@@ -76,7 +89,13 @@ public class TaskManager {
         }
     }
 
-    // Import tasks from a text file
+    /**
+     * Imports tasks from a text file.
+     *
+     * @param file the uploaded file to import tasks from
+     * @return String containing a success message if import was successful, or the error
+     * message if not.
+     */
     public String importTasksFromFile(File file) {
         try (InputStream is = new FileInputStream(file); BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             String line;
@@ -92,9 +111,14 @@ public class TaskManager {
         }
     }
 
-    // Parse a task from a string
+    /**
+     * Parses a task from a string.
+     *
+     * @param line the string representation of a task
+     * @return the parsed task, or null if the format is invalid
+     */
     private Task<Integer> parseTask(String line) {
-        String[] parts = line.split(",");
+        String[] parts = line.split("\\|");
         if (parts.length != 5) {
             return null; // Invalid task format
         }
@@ -110,17 +134,23 @@ public class TaskManager {
         }
     }
 
-    // Export tasks to a CSV file
+    /**
+     * Exports tasks to a CSV file and returns the file properties.
+     *
+     * @param fileName the name of the CSV file to export tasks to
+     * @return String containing file properties if file creation was successful, or the
+     * error message if not.
+     */
     public String exportTasksToCSV(String fileName) {
         Path filePath = Paths.get(fileName);
         List<String> lines = new ArrayList<>();
         lines.add("ID,Name,Description,CompletionStatus,Category"); // CSV header
         for (Task<Integer> task : tasks) {
-            lines.add(task.getId() + ","
-                    + task.getName() + ","
-                    + task.getDescription() + ","
-                    + String.valueOf(task.isComplete()) + ","
-                    + task.getCategory());
+            lines.add(task.getId() + "," 
+                    + escapeCSV(task.getName()) + "," 
+                    + escapeCSV(task.getDescription()) + "," 
+                    + task.isComplete() + "," 
+                    + escapeCSV(task.getCategory()));
         }
         try {
             Files.write(filePath, lines);
@@ -133,10 +163,24 @@ public class TaskManager {
                     + "\nFile size: " + attrs.size() + " bytes"
                     + "\nCreation date: " + attrs.creationTime()
                     + "\nLast modified date: " + attrs.lastModifiedTime();
-            
+
         } catch (IOException e) {
             return "An error occurred while exporting tasks to CSV file: " + e.getMessage();
         }
+    }
+
+    /**
+     * Escapes a string for CSV format.
+     *
+     * @param value the string to be escaped
+     * @return the escaped string
+     */
+    private String escapeCSV(String value) {
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            value = value.replace("\"", "\"\"");
+            return "\"" + value + "\"";
+        }
+        return value;
     }
 
 }

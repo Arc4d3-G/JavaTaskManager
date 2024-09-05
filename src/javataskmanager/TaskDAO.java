@@ -8,11 +8,18 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object (DAO) class for managing tasks in the SQLite database.
+ */
 public class TaskDAO {
 
     private String url = "jdbc:sqlite:task_manager_db.db";
 
-    // Create a new task
+    /**
+     * Creates a new task in the database.
+     *
+     * @param task the task to be created
+     */
     public String createTask(Task<Integer> task) {
         String sql = "INSERT INTO tasks(name, description, completion_status, category) VALUES(?, ?, ?, ?)";
         int id = 0;
@@ -30,7 +37,11 @@ public class TaskDAO {
         return ("Success | " + id);
     }
 
-    // Read all tasks
+    /**
+     * Retrieves all tasks from the database.
+     *
+     * @return a list of all tasks
+     */
     public List<Task<Integer>> getAllTasks() {
         List<Task<Integer>> tasks = new ArrayList<>();
         String sql = "SELECT id, name, description, completion_status, category FROM tasks";
@@ -53,7 +64,12 @@ public class TaskDAO {
         return tasks;
     }
 
-    // Update a task
+    /**
+     * Updates an existing task in the database.
+     *
+     * @param task the task with updated information
+     * @return String indicating success or error.
+     */
     public String updateTask(Task<Integer> task) {
         String sql = "UPDATE tasks SET name = ?, description = ?, completion_status = ?, category = ? WHERE id = ?";
 
@@ -71,7 +87,12 @@ public class TaskDAO {
         return "Success";
     }
 
-    // Delete a task
+    /**
+     * Deletes a task from the database by its ID.
+     *
+     * @param id the ID of the task to be deleted
+     * @return String indicating success or error.
+     */
     public String deleteTask(int id) {
         String sql = "DELETE FROM tasks WHERE id = ?";
 

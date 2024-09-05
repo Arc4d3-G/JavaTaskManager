@@ -4,9 +4,6 @@
  */
 package javataskmanager;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  *
  * @author brdde
@@ -17,36 +14,20 @@ public class JavaTaskManager {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        // Create Class Instances
         TaskManager taskManager = new TaskManager();
         TaskDAO taskDao = new TaskDAO();
-//        TaskCategorizer taskCategorizer = new TaskCategorizer();
         
         // Get all tasks from db and add to taskManager instance
         taskDao.getAllTasks().forEach((task) -> {
             taskManager.addTask(task);
         });
-
+        
+        // Instaniate GUI frame and pass classes as parameters
         TaskManagerFrame tmf = new TaskManagerFrame(taskManager, taskDao);
         tmf.setVisible(true);
-        // Adding some tasks
-//        taskManager.addTask(new Task<>(null, "Complete project report", "Finish the final report for the project", false, "Work"));
-//        taskManager.addTask(new Task<>(null, "Buy groceries", "Buy milk, eggs, and bread", false, "Personal"));
-//        taskManager.addTask(new Task<>(null, "Workout", "Go to the gym for an hour", true, "Health"));
-
-//        taskDao.getAllTasks().forEach(( Task<Integer> task) -> {
-//            taskDao.deleteTask(task.getId());
-//        });
-//        
-//        Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(taskManager.getTasks());
-//
-//        List<Task<Integer>> incompleteTasks = taskManager.filterTasks(task -> !task.isComplete());
-//        incompleteTasks.forEach(System.out::println);
-//
-//        // Printing categorized tasks
-//        categorizedTasks.forEach((category, tasks) -> {
-//            System.out.println("Category: " + category);
-////            tasks.forEach(System.out::println);
-//        });
+        
     }
 
 }

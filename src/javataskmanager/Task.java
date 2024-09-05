@@ -5,9 +5,9 @@
 package javataskmanager;
 
 /**
+ * Represents a task with a generic ID type.
  *
- * @author brdde
- * @param <T>
+ * @param <T> the type of the task ID
  */
 public class Task<T> {
 
@@ -17,6 +17,15 @@ public class Task<T> {
     private boolean isComplete;
     private String category;
 
+    /**
+     * Constructs a new Task with the specified details.
+     *
+     * @param id the unique identifier for the task
+     * @param name the name of the task
+     * @param description the description of the task
+     * @param completionStatus the completion status of the task (true if completed, false otherwise)
+     * @param category the category of the task
+     */
     public Task(T id, String name, String description, boolean completionStatus, String category) {
         this.id = id;
         this.name = name;
@@ -64,16 +73,5 @@ public class Task<T> {
 
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    @Override
-    public String toString() {
-        return "Task{"
-                + "id=" + id
-                + ", name='" + name + '\''
-                + ", description='" + description + '\''
-                + ", completionStatus=" + isComplete
-                + ", category='" + category + '\''
-                + '}';
     }
 }

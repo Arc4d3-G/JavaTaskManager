@@ -31,13 +31,17 @@ public class TaskManagerFrame extends javax.swing.JFrame {
      * @param taskDao
      */
     public TaskManagerFrame(TaskManager taskManager, TaskDAO taskDao) {
+
+        // Assign and instanciate
         this.taskManager = taskManager;
         this.taskDao = taskDao;
         this.taskCategorizer = new TaskCategorizer();
         this.gui = new HandleGUI();
 
+        // Create a table model to display tasks
         this.tableModel = (DefaultTableModel) new DefaultTableModel() {
             @Override
+            // Set cells to be un-editable
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -48,13 +52,41 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         tableModel.addColumn("is_completed");
         tableModel.addColumn("Category");
 
+        // Create components and populate task table + category drop-down
         initComponents();
         gui.refreshCategoryCombo();
         gui.refreshTaskTable();
     }
 
+    /**
+     * Utility inner class for categorizing tasks.
+     */
+    class TaskCategorizer {
+
+        /**
+         * Categorizes tasks by their category.
+         *
+         * @param tasks the list of tasks to be categorized
+         * @return a map where the key is the category and the value is a list of tasks in
+         * that category
+         */
+        Map<String, List<Task<Integer>>> categorizeTasks(List<Task<Integer>> tasks) {
+            Map<String, List<Task<Integer>>> categorizedTasks = new HashMap<>();
+            for (Task<Integer> task : tasks) {
+                categorizedTasks.computeIfAbsent(task.getCategory(), k -> new ArrayList<>()).add(task);
+            }
+            return categorizedTasks;
+        }
+    }
+
+    /**
+     * Utility inner class with methods for different events
+     */
     class HandleGUI {
 
+        /**
+         * Populate the "Task Details" panel with the selected task's details
+         */
         void populateTaskDetails() {
             int idCol = 0;
             int nameCol = 1;
@@ -62,17 +94,23 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             int completionCol = 3;
             int categoryCol = 4;
 
+            // get row
             int row = TaskTable.getSelectedRow();
+
+            // If none selected, disable edit/delete button
             if (row != -1) {
                 EditButton.setEnabled(true);
                 DeleteButton.setEnabled(true);
             }
+
+            // Get row column cell values
             String id = TaskTable.getModel().getValueAt(row, idCol).toString();
             String name = TaskTable.getModel().getValueAt(row, nameCol).toString();
             String description = TaskTable.getModel().getValueAt(row, descCol).toString();
             boolean completionStatus = (boolean) TaskTable.getModel().getValueAt(row, completionCol);
             String category = TaskTable.getModel().getValueAt(row, categoryCol).toString();
 
+            // Set fields to display values
             IDField.setText(id);
             NameField.setText(name);
             CategoryField.setText(category);
@@ -80,15 +118,21 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             DescriptionTextArea.setText(description);
         }
 
+        /**
+         * Handle the Edit/Save button click event
+         */
         void handleTaskEdit() {
 
+            // if no row is selected, return.
             int row = TaskTable.getSelectedRow();
             if (row == -1) {
                 return;
             }
 
+            // if EditButton says "Edit" (i.e editing has not started)
             if (EditButton.getText() == "Edit") {
 
+                // Enable all fields except ID for modificaiton
                 NameField.setEnabled(true);
                 NameField.setEditable(true);
                 CategoryField.setEnabled(true);
@@ -99,19 +143,23 @@ public class TaskManagerFrame extends javax.swing.JFrame {
 
                 EditButton.setText("Save");
             } else {
-
+                // If button says "Save", proceed to get values and create a new task
                 int id = Integer.parseInt(IDField.getText());
                 String name = NameField.getText();
                 String description = DescriptionTextArea.getText();
                 boolean completionStatus = CompletedCheck.isSelected();
                 String category = CategoryField.getText();
                 Task<Integer> newTask = new Task<>(id, name, description, completionStatus, category);
+
+                // Pass new task to taskDao to apply update to the db and get the response
                 String response = taskDao.updateTask(newTask);
 
                 if (response == "Success") {
 
+                    // Apply the change to the local taskManager as well
                     taskManager.updateTask(newTask);
 
+                    // Reset "Task Display" to initial state
                     NameField.setEnabled(false);
                     NameField.setEditable(false);
                     CategoryField.setEnabled(false);
@@ -120,6 +168,8 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                     DescriptionTextArea.setEnabled(false);
                     DescriptionTextArea.setEditable(false);
                     EditButton.setText("Edit");
+
+                    // Refresh
                     refreshCategoryCombo();
                     refreshTaskTable();
                 } else {
@@ -128,30 +178,46 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             }
         }
 
+        /**
+         * Handle the Delete button click event
+         */
         void handleTaskDelete() {
+
+            // Get ID and pass it to taskDao to remove the task from the db
             int id = Integer.parseInt(IDField.getText());
             String response = taskDao.deleteTask(id);
 
             if (response == "Success") {
+
+                // Remove from local taskManager & refresh
                 taskManager.removeTask(id);
                 refreshCategoryCombo();
                 refreshTaskTable();
             }
         }
 
+        /**
+         * Handle the Create button click event
+         */
         void handleTaskCreate() {
+
+            // Get new task values
             String name = NewTaskNameField.getText();
             String category = NewTaskCategoryField.getText();
             String description = NewTaskDescriptionTextArea.getText();
 
+            // Create task and pass it to taskDao to insert into the db
             Task<Integer> newTask = new Task<>(null, name, description, false, category);
             String response = taskDao.createTask(newTask);
 
             if (response.contains("Success")) {
-                System.out.println(response);
+
+                // Get db ID value from response string & add task to local taskManager
                 int newId = Integer.parseInt(response.split(" \\| ")[1]);
                 newTask.setId(newId);
                 taskManager.addTask(newTask);
+
+                // Close NewTaskDialog and refresh
                 NewTaskDialog.dispose();
                 refreshCategoryCombo();
                 refreshTaskTable();
@@ -160,13 +226,18 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             }
         }
 
-        // Clear and populate CategoryCombo box with all categories (hashmap keys)
+        /**
+         * Clear and populate CategoryCombo box with all the key values from
+         * taskCategorizer map
+         */
         void refreshCategoryCombo() {
             // Get all tasks in taskManager
             List<Task<Integer>> allTasks = taskManager.getTasks();
 
             // Create hashmap based on task categories
             Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(allTasks);
+
+            // Clear CategoryCombo & add item for each key (aka category) in categorizedTasks
             CategoryCombo.removeAllItems();
             CategoryCombo.addItem("-- Show All --");
             categorizedTasks.forEach((category, tasks) -> {
@@ -174,11 +245,19 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             });
         }
 
+        /**
+         * Filter a task list by the parameters provided by user input
+         *
+         * @param tasks
+         * @return
+         */
         List<Task<Integer>> filterBySearch(List<Task<Integer>> tasks) {
+
+            // Get Input from SearchField & column to filter by from SearchCombo
             String query = SearchField.getText().trim().toLowerCase();
             String column = (String) SearchCombo.getSelectedItem();
 
-            System.out.println(query);
+            // Return filtered tasks
             if (query.isBlank()) {
                 return tasks;
             } else {
@@ -195,35 +274,41 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             }
         }
 
+        /**
+         * Empties and re-populates the taskTable based on the applied filter/search
+         * parameters
+         */
         void refreshTaskTable() {
-            System.out.println("refreshed");
+
             // Clear table of all rows
             tableModel.setRowCount(0);
 
+            // Set elements to initial state
             EditButton.setEnabled(false);
             DeleteButton.setEnabled(false);
-
             IDField.setText(null);
             NameField.setText(null);
             CategoryField.setText(null);
             CompletedCheck.setSelected(false);
             DescriptionTextArea.setText(null);
 
-            // Get all tasks in taskManager
+            // Get all tasks in taskManager filtered by the search parameters
             List<Task<Integer>> searchResults = filterBySearch(taskManager.getTasks());
 
-            // Create hashmap based on task categories
+            // Create hashmap with all tasks grouped by category
             Map<String, List<Task<Integer>>> categorizedTasks = taskCategorizer.categorizeTasks(searchResults);
 
+            // Filter tasks by selected filter category
             String selectedCategory = (String) CategoryCombo.getSelectedItem();
             List<Task<Integer>> tasksToFilter;
+
             if (selectedCategory == "-- Show All --") {
                 tasksToFilter = searchResults;
             } else {
                 tasksToFilter = categorizedTasks.get(selectedCategory);
             }
 
-            // Filter all tasks by user criteria (seach box + show completed tickbox)
+            // Filter tasks by completion status based on filter tick box
             boolean showCompleted = ShowCompCheck.isSelected();
             List<Task<Integer>> filteredTasks;
 
@@ -233,6 +318,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                 filteredTasks = tasksToFilter;
             }
 
+            // If any tasks remain after filtering, create and add rows for each task
             if (filteredTasks != null) {
                 filteredTasks.forEach(task -> {
                     int id = task.getId();
@@ -250,17 +336,24 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             }
 
         }
-    }
 
-    class TaskCategorizer {
+        // Handle Export Button Event
+        String exportToTXT() {
 
-        Map<String, List<Task<Integer>>> categorizeTasks(List<Task<Integer>> tasks) {
-            Map<String, List<Task<Integer>>> categorizedTasks = new HashMap<>();
-            for (Task<Integer> task : tasks) {
-                categorizedTasks.computeIfAbsent(task.getCategory(), k -> new ArrayList<>()).add(task);
-            }
-            return categorizedTasks;
+            return taskManager.saveTasksToFile("tasks.txt");
         }
+        
+        // Handle Export Button Event
+        String exportToCSV() {
+
+            return taskManager.exportTasksToCSV("tasks.csv");
+        }
+        
+        // handle Import Button Event
+        String importFromTXT(File file) {
+            return taskManager.importTasksFromFile(file);
+        }
+
     }
 
     /**
@@ -284,7 +377,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jPanel10 = new javax.swing.JPanel();
         CreateButton = new javax.swing.JButton();
         CancelButton = new javax.swing.JButton();
-        ExportResultDialog = new javax.swing.JDialog();
+        ResultDialog = new javax.swing.JDialog();
         jPanel11 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         ExportTextPanel = new javax.swing.JTextPane();
@@ -330,6 +423,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         jMenu3 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
 
+        NewTaskDialog.setTitle("Add New Task");
         NewTaskDialog.setMinimumSize(new java.awt.Dimension(350, 350));
         NewTaskDialog.setPreferredSize(new java.awt.Dimension(320, 350));
 
@@ -420,10 +514,11 @@ public class TaskManagerFrame extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        ExportResultDialog.setMinimumSize(new java.awt.Dimension(320, 230));
-        ExportResultDialog.setPreferredSize(new java.awt.Dimension(320, 230));
+        ResultDialog.setTitle("Results");
+        ResultDialog.setMinimumSize(new java.awt.Dimension(320, 330));
+        ResultDialog.setPreferredSize(new java.awt.Dimension(320, 330));
 
-        jPanel11.setBorder(javax.swing.BorderFactory.createTitledBorder("Export Result"));
+        jPanel11.setBorder(javax.swing.BorderFactory.createTitledBorder("Action Result"));
 
         ExportTextPanel.setEditable(false);
         jScrollPane3.setViewportView(ExportTextPanel);
@@ -441,7 +536,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -455,27 +550,28 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         });
         jPanel12.add(CloseButton);
 
-        javax.swing.GroupLayout ExportResultDialogLayout = new javax.swing.GroupLayout(ExportResultDialog.getContentPane());
-        ExportResultDialog.getContentPane().setLayout(ExportResultDialogLayout);
-        ExportResultDialogLayout.setHorizontalGroup(
-            ExportResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ExportResultDialogLayout.createSequentialGroup()
+        javax.swing.GroupLayout ResultDialogLayout = new javax.swing.GroupLayout(ResultDialog.getContentPane());
+        ResultDialog.getContentPane().setLayout(ResultDialogLayout);
+        ResultDialogLayout.setHorizontalGroup(
+            ResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ResultDialogLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(ExportResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(ResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel12, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        ExportResultDialogLayout.setVerticalGroup(
-            ExportResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ExportResultDialogLayout.createSequentialGroup()
+        ResultDialogLayout.setVerticalGroup(
+            ResultDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ResultDialogLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel12, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
+        FileChooserDialog.setTitle("Choose File");
         FileChooserDialog.setMinimumSize(new java.awt.Dimension(550, 447));
 
         ImportFileChooser.setAcceptAllFileFilterUsed(false);
@@ -508,6 +604,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Java Task Manager");
         setMinimumSize(new java.awt.Dimension(625, 690));
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Task Details"));
@@ -764,88 +861,106 @@ public class TaskManagerFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    // New Task Button Event
     private void AddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddButtonActionPerformed
         NewTaskDialog.setLocationRelativeTo(this);
         NewTaskDialog.setVisible(true);
     }//GEN-LAST:event_AddButtonActionPerformed
 
+    // NewTaskDialog Cancel Button Event
     private void CancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelButtonActionPerformed
-        // TODO add your handling code here:
+
         NewTaskDialog.dispose();
     }//GEN-LAST:event_CancelButtonActionPerformed
 
+    // TaskTable row click event
     private void TaskTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TaskTableMouseClicked
-        // TODO add your handling code here:
+
         gui.populateTaskDetails();
     }//GEN-LAST:event_TaskTableMouseClicked
 
+    // Edit Button Event
     private void EditButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EditButtonActionPerformed
-        // TODO add your handling code here:
+
         gui.handleTaskEdit();
     }//GEN-LAST:event_EditButtonActionPerformed
 
+    // Delete Button Event
     private void DeleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteButtonActionPerformed
-        // TODO add your handling code here:
+
         gui.handleTaskDelete();
     }//GEN-LAST:event_DeleteButtonActionPerformed
 
+    // Create Button Event
     private void CreateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateButtonActionPerformed
-        // TODO add your handling code here:
+
         gui.handleTaskCreate();
     }//GEN-LAST:event_CreateButtonActionPerformed
 
+    // Filter Button Event
     private void FilterButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_FilterButtonActionPerformed
-        // TODO add your handling code here:
+
         gui.refreshTaskTable();
     }//GEN-LAST:event_FilterButtonActionPerformed
 
+    // Search Button Event
     private void SearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchButtonActionPerformed
-        // TODO add your handling code here:
+
         gui.refreshTaskTable();
     }//GEN-LAST:event_SearchButtonActionPerformed
 
+    // Export to .txt Menu Button Event
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
-        // TODO add your handling code here:
-        String result = taskManager.saveTasksToFile("tasks.txt");
 
-        ExportResultDialog.setLocationRelativeTo(this);
-        ExportResultDialog.setVisible(true);
+        String result = gui.exportToTXT();
+
+        ResultDialog.setLocationRelativeTo(this);
+        ResultDialog.setVisible(true);
         ExportTextPanel.setText(result);
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
+    // ExportResultDialog Close Button Event
     private void CloseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CloseButtonActionPerformed
-        // TODO add your handling code here:
-        ExportResultDialog.dispose();
+
+        ResultDialog.dispose();
     }//GEN-LAST:event_CloseButtonActionPerformed
 
+    // Import from .txt Meny Button Event
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
-        // TODO add your handling code here:
+
         FileChooserDialog.setLocationRelativeTo(this);
         FileChooserDialog.setVisible(true);
     }//GEN-LAST:event_jMenuItem3ActionPerformed
 
+    // FileChooser Buttons Event
     private void ImportFileChooserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ImportFileChooserActionPerformed
-        // TODO add your handling code here:
+
+        // if selection approve button is clicked
         if (evt.getActionCommand().equals(javax.swing.JFileChooser.APPROVE_SELECTION)) {
+
+            // Get selected file and attempt to import
             File file = ImportFileChooser.getSelectedFile();
-            String result = taskManager.importTasksFromFile(file);
+            String result = gui.importFromTXT(file);
+
             FileChooserDialog.dispose();
-            ExportResultDialog.setLocationRelativeTo(this);
-            ExportResultDialog.setVisible(true);
+            ResultDialog.setLocationRelativeTo(this);
+            ResultDialog.setVisible(true);
             ExportTextPanel.setText(result);
             gui.refreshTaskTable();
 
+            // if close button is clicked
         } else if (evt.getActionCommand().equals(javax.swing.JFileChooser.CANCEL_SELECTION)) {
             FileChooserDialog.dispose();
         }
     }//GEN-LAST:event_ImportFileChooserActionPerformed
-
+    
+    // Export to .csb Meny Button Event
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        // TODO add your handling code here:
-        String result = taskManager.saveTasksToFile("tasks.csv");
 
-        ExportResultDialog.setLocationRelativeTo(this);
-        ExportResultDialog.setVisible(true);
+        String result = gui.exportToCSV();
+
+        ResultDialog.setLocationRelativeTo(this);
+        ResultDialog.setVisible(true);
         ExportTextPanel.setText(result);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
@@ -889,7 +1004,6 @@ public class TaskManagerFrame extends javax.swing.JFrame {
     private javax.swing.JButton DeleteButton;
     private javax.swing.JTextArea DescriptionTextArea;
     private javax.swing.JButton EditButton;
-    private javax.swing.JDialog ExportResultDialog;
     private javax.swing.JTextPane ExportTextPanel;
     private javax.swing.JDialog FileChooserDialog;
     private javax.swing.JButton FilterButton;
@@ -900,6 +1014,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
     private javax.swing.JTextArea NewTaskDescriptionTextArea;
     private javax.swing.JDialog NewTaskDialog;
     private javax.swing.JTextField NewTaskNameField;
+    private javax.swing.JDialog ResultDialog;
     private javax.swing.JButton SearchButton;
     private javax.swing.JComboBox<String> SearchCombo;
     private javax.swing.JTextField SearchField;
@@ -940,6 +1055,7 @@ public class TaskManagerFrame extends javax.swing.JFrame {
 
 }
 
+// FilleChooser FileFilter overrides to ensure only TXT files can be selected
 class MyCustomFilter extends javax.swing.filechooser.FileFilter {
 
     @Override

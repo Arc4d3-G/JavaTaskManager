@@ -8,8 +8,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * Provides a connection to a SQLite database.
+ */
 public class SQLiteConnection {
-
+    
+    /**
+     * Establishes a connection to the SQLite database.
+     *
+     * @return the connection object
+     */
     public static Connection connect() {
         Connection conn = null;
         try {
@@ -24,7 +32,7 @@ public class SQLiteConnection {
         return conn;
     }
 
-    public static void main(String[] args) {
-        connect();
-    }
+//    public static void main(String[] args) {
+//        connect();
+//    }
 }

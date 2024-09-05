@@ -1,5 +1,20 @@
-10,Complete this assignment,Finish the final report for the project and submit it to the manager,false,School
-11,Feed Dog,blah blah,false,Personal
-14,Go to bed,its okay bro,false,School
-15,Go to sleep,its okay bro,false,School
-16,Go to party,its okay bro,false,Personal
+1|Complete project report|Finish the final report for the project and submit it to the manager|false|Work
+2|Buy groceries|Buy milk, eggs, and bread|false|Personal
+3|Workout|Go to the gym for an hour|true|Health
+4|Read a book|Read 50 pages of a novel|false|Leisure
+5|Plan vacation|Research and plan the upcoming vacation|false|Personal
+6|Team meeting|Attend the weekly team meeting|true|Work
+7|Doctor appointment|Visit the doctor for a regular check-up|false|Health
+8|Clean house|Clean the living room and kitchen|false|Personal
+9|Finish assignment|Complete the assignment for the online course|false|Education
+10|Call parents|Call parents to check in and chat|true|Personal
+11|Grocery shopping|Buy vegetables and fruits for the week|false|Personal
+12|Pay bills|Pay electricity and water bills|false|Personal
+13|Project presentation|Prepare slides for the project presentation|false|Work
+14|Yoga session|Attend a yoga session in the evening|true|Health
+15|Car maintenance|Take the car for maintenance|false|Personal
+16|Client meeting|Meet with the client to discuss project requirements|false|Work
+17|Study for exam|Study chapters 1-3 for the upcoming exam|false|Education
+18|Gardening|Water the plants and trim the bushes|true|Leisure
+19|Laundry|Wash and fold clothes|false|Personal
+20|Write blog post|Write a new blog post on recent travel experiences|false|Leisure
